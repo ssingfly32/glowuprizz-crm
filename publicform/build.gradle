@@ -1,0 +1,9 @@
+// 이 모듈은 인증되지 않은 방문자의 요청을 처리한다.
+// admin 모듈을 절대 의존하지 않는다 — 관리자 인증/세션 관련 코드에
+// 이 모듈에서는 컴파일 타임에 접근할 수 없어야 한다는 것이 이 분리의 목적이다.
+dependencies {
+	implementation project(':core')
+
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+}

@@ -1,0 +1,6 @@
+rootProject.name = 'glowuprizz-crm'
+
+include 'core'
+include 'admin'
+include 'publicform'
+include 'bootstrap'

@@ -1,0 +1,68 @@
+plugins {
+	id 'org.springframework.boot' version '4.1.0' apply false
+	id 'io.spring.dependency-management' version '1.1.7' apply false
+}
+
+allprojects {
+	group = 'com.sanghee'
+	version = '0.0.1-SNAPSHOT'
+
+	repositories {
+		mavenCentral()
+	}
+}
+
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'io.spring.dependency-management'
+	apply plugin: 'jacoco'
+
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(17)
+		}
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		options.encoding = 'UTF-8'
+		options.compilerArgs << '-parameters'
+	}
+
+	tasks.withType(Test).configureEach {
+		systemProperty 'file.encoding', 'UTF-8'
+	}
+
+	dependencyManagement {
+		imports {
+			mavenBom "org.springframework.boot:spring-boot-dependencies:4.1.0"
+		}
+	}
+
+	dependencies {
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	}
+
+	tasks.named('test') {
+		useJUnitPlatform()
+		finalizedBy jacocoTestReport
+	}
+
+	jacocoTestReport {
+		dependsOn test
+		reports {
+			xml.required = false
+			csv.required = false
+			html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+		}
+	}
+
+	jacoco {
+		toolVersion = "0.8.14"
+		reportsDirectory = layout.buildDirectory.dir('customJacocoReportDir')
+	}
+}
+
+project(':bootstrap') {
+	apply plugin: 'org.springframework.boot'
+}

@@ -1,0 +1,19 @@
+dependencies {
+	implementation project(':core')
+	implementation project(':admin')
+	implementation project(':publicform')
+
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+}
+
+jacocoTestReport {
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: ['**/GlowuprizzCrmApplication.class'])
+		}))
+	}
+}
