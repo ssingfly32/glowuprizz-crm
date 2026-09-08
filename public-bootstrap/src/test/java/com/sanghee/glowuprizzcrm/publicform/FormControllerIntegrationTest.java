@@ -1,0 +1,106 @@
+package com.sanghee.glowuprizzcrm.publicform;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.sanghee.glowuprizzcrm.AbstractPublicIntegrationTest;
+import com.sanghee.glowuprizzcrm.core.campaign.Campaign;
+import com.sanghee.glowuprizzcrm.core.link.Channel;
+import com.sanghee.glowuprizzcrm.core.link.DistributionLink;
+import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+
+@DisplayName("/f/{slug} 통합 테스트")
+class FormControllerIntegrationTest extends AbstractPublicIntegrationTest {
+
+    @Test
+    @DisplayName("공개된 캠페인이면 등록된 HTML에 제출 스크립트가 주입돼 반환된다")
+    void getForm_returnsHtmlWithInjectedScript_whenPublished() throws Exception {
+        createPublishedCampaign("form-success", "<html><body><h1>가을 웨비나</h1><form></form></body></html>");
+
+        mockMvc.perform(get("/f/form-success"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("가을 웨비나")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<script>")))
+                .andExpect(cookie().exists("visitor_token"));
+    }
+
+    @Test
+    @DisplayName("미공개 캠페인이면 404와 CAMPAIGN_NOT_PUBLISHED를 반환한다")
+    void getForm_returns404_whenNotPublished() throws Exception {
+        Campaign campaign = createPublishedCampaign("form-unpublished", "<html></html>");
+        campaign.unpublish();
+        campaignRepository.save(campaign);
+
+        mockMvc.perform(get("/f/form-unpublished"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("CAMPAIGN_NOT_PUBLISHED"));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 슬러그면 404와 CAMPAIGN_NOT_FOUND를 반환한다")
+    void getForm_returns404_whenSlugNotFound() throws Exception {
+        mockMvc.perform(get("/f/no-such-slug"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("CAMPAIGN_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("배포 링크 토큰과 함께 제출하면 채널 정보와 함께 신청이 저장된다")
+    void submit_savesSubmission_withChannel_whenLinkTokenProvided() throws Exception {
+        Campaign campaign = createPublishedCampaign("submit-with-link", "<html><body><form></form></body></html>");
+        DistributionLink link = createLink(campaign, Channel.YOUTUBE);
+        Map<String, Object> data = Map.of("email", "visitor@example.com", "name", "홍길동");
+
+        mockMvc.perform(post("/f/submit-with-link/submissions")
+                        .param("link", link.getLinkToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(data)))
+                .andExpect(status().isCreated());
+
+        assertThat(submissionRepository.findAll())
+                .anySatisfy(submission -> {
+                    assertThat(submission.getCampaignId()).isEqualTo(campaign.getId());
+                    assertThat(submission.getDistributionLinkId()).isEqualTo(link.getId());
+                    assertThat(submission.getChannel()).isEqualTo(Channel.YOUTUBE);
+                    assertThat(submission.getData()).contains("visitor@example.com");
+                });
+    }
+
+    @Test
+    @DisplayName("링크 토큰 없이 제출해도(직접 접근) 채널 없이 신청이 저장된다")
+    void submit_savesSubmission_withoutChannel_whenNoLinkToken() throws Exception {
+        createPublishedCampaign("submit-direct", "<html><body><form></form></body></html>");
+        Map<String, Object> data = Map.of("email", "direct@example.com");
+
+        mockMvc.perform(post("/f/submit-direct/submissions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(data)))
+                .andExpect(status().isCreated());
+
+        assertThat(submissionRepository.findAll())
+                .anySatisfy(submission -> {
+                    assertThat(submission.getDistributionLinkId()).isNull();
+                    assertThat(submission.getChannel()).isNull();
+                    assertThat(submission.getData()).contains("direct@example.com");
+                });
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 슬러그로 제출하면 404를 반환한다")
+    void submit_returns404_whenSlugNotFound() throws Exception {
+        mockMvc.perform(post("/f/no-such-slug/submissions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", "x@x.com"))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("CAMPAIGN_NOT_FOUND"));
+    }
+}

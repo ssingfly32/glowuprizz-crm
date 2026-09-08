@@ -2,15 +2,17 @@ package com.sanghee.glowuprizzcrm.template;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sanghee.glowuprizzcrm.AbstractAdminIntegrationTest;
 import com.sanghee.glowuprizzcrm.admin.template.HtmlTemplateCreateRequest;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 @DisplayName("/admin/html-templates 통합 테스트")
 class HtmlTemplateControllerIntegrationTest extends AbstractAdminIntegrationTest {
@@ -37,6 +39,7 @@ class HtmlTemplateControllerIntegrationTest extends AbstractAdminIntegrationTest
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
+                .andExpect(header().string("Location", Matchers.matchesRegex(".*/admin/html-templates/\\d+")))
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.name").value("정상 등록 테스트"));
     }

@@ -12,6 +12,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 // data는 스키마리스 JSON 문자열(jsonb 컬럼)로 저장한다. AI가 만드는 HTML마다
 // 폼 필드명이 달라질 수 있어 고정 컬럼으로 모델링할 수 없다
@@ -37,6 +39,7 @@ public class Submission {
     @Column(nullable = false)
     private String visitorToken;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     private String data;
 
