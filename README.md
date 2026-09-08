@@ -35,7 +35,10 @@
 ./gradlew test
 ```
 
-- `core` 모듈의 JPA 리포지토리 테스트는 Testcontainers로 실제 PostgreSQL 컨테이너를
-  띄워 검증한다 (별도 DB 실행 불필요, Docker만 있으면 됨).
+- `core` 모듈은 Spring/DB 없이 도메인 엔티티의 생성자 검증 로직만 검증하는 순수
+  단위 테스트다 (밀리초 단위로 빠르게 끝남).
+- `admin-bootstrap`/`public-bootstrap` 모듈은 Testcontainers로 실제 PostgreSQL
+  컨테이너를 띄워, Security 필터 체인/Flyway 마이그레이션/JPA까지 전부 실제로
+  동작하는 상태에서 검증하는 통합 테스트다 (별도 DB 실행 불필요, Docker만 있으면 됨).
 - 전체 모듈 테스트 리포트: `./gradlew test jacocoTestReport` 실행 후
   `*/build/customJacocoReportDir/jacocoHtml/index.html` 확인.

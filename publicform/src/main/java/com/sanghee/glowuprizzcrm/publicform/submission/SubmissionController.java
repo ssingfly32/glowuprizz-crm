@@ -1,6 +1,8 @@
 package com.sanghee.glowuprizzcrm.publicform.submission;
 
 import com.sanghee.glowuprizzcrm.core.campaign.Campaign;
+import com.sanghee.glowuprizzcrm.core.common.exception.BusinessException;
+import com.sanghee.glowuprizzcrm.core.common.exception.ErrorCode;
 import com.sanghee.glowuprizzcrm.core.link.Channel;
 import com.sanghee.glowuprizzcrm.core.link.DistributionLink;
 import com.sanghee.glowuprizzcrm.publicform.campaign.CampaignLookupService;
@@ -50,6 +52,11 @@ public class SubmissionController {
         Channel channel = null;
         if (link != null) {
             DistributionLink distributionLink = distributionLinkLookupService.getByToken(link);
+            // link가 이 캠페인 소속이 아니면 성과 데이터가 오염된다. 존재하지 않는 링크와
+            // 동일하게 취급한다.
+            if (!distributionLink.getCampaignId().equals(campaign.getId())) {
+                throw new BusinessException(ErrorCode.LINK_NOT_FOUND);
+            }
             distributionLinkId = distributionLink.getId();
             channel = distributionLink.getChannel();
         }
