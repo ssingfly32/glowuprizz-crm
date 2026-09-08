@@ -9,7 +9,8 @@ public enum ErrorCode {
     INVALID_PUBLIC_SLUG("공개 URL 슬러그는 소문자, 숫자, 하이픈만 사용할 수 있습니다."),
     INVALID_LINK_TOKEN("배포 링크 토큰은 비어 있을 수 없습니다."),
     INVALID_VISITOR_TOKEN("방문자 토큰은 비어 있을 수 없습니다."),
-    INVALID_SUBMISSION_DATA("신청 데이터는 비어 있을 수 없습니다.");
+    INVALID_SUBMISSION_DATA("신청 데이터는 비어 있을 수 없습니다."),
+    AUTH_INVALID_CREDENTIALS("이메일 또는 비밀번호가 올바르지 않습니다.");
 
     private final String message;
 

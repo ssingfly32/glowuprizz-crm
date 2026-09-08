@@ -1,8 +1,8 @@
 dependencies {
 	implementation project(':core')
 	implementation project(':admin')
-	implementation project(':publicform')
 
+	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
@@ -13,7 +13,7 @@ dependencies {
 jacocoTestReport {
 	afterEvaluate {
 		classDirectories.setFrom(files(classDirectories.files.collect {
-			fileTree(dir: it, exclude: ['**/GlowuprizzCrmApplication.class'])
+			fileTree(dir: it, exclude: ['**/AdminBootstrapApplication.class'])
 		}))
 	}
 }
