@@ -31,6 +31,11 @@ public class FormController {
         this.visitorTokenResolver = visitorTokenResolver;
     }
 
+    // 등록된 HTML은 신뢰할 수 없는 내용이다. connect-src를 self로 제한해, 그 안의 JS가
+    // 방문자 데이터를 외부 서버로 빼돌리는 걸 브라우저 차원에서 막는다 (docs/adr/0011의
+    // 잔여 위험 대응). frame-ancestors도 막아 클릭재킹을 방지한다.
+    private static final String CONTENT_SECURITY_POLICY = "connect-src 'self'; frame-ancestors 'none'";
+
     // link 파라미터가 있으면 /r/{token} 리다이렉트를 거쳐 온 것이라 방문이 이미 기록됐다.
     // 없으면(직접 접근) 여기서 채널 없이 방문을 기록한다 (docs/adr/0007).
     @GetMapping(value = "/f/{slug}", produces = MediaType.TEXT_HTML_VALUE)
@@ -44,6 +49,7 @@ public class FormController {
         if (link == null) {
             visitService.record(campaign.getId(), null, null, visitorToken);
         }
+        response.setHeader("Content-Security-Policy", CONTENT_SECURITY_POLICY);
         return formRenderService.render(campaign, link);
     }
 }

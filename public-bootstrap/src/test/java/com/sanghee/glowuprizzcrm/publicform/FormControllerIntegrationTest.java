@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,7 +31,8 @@ class FormControllerIntegrationTest extends AbstractPublicIntegrationTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("가을 웨비나")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("<script>")))
-                .andExpect(cookie().exists("visitor_token"));
+                .andExpect(cookie().exists("visitor_token"))
+                .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.containsString("connect-src 'self'")));
     }
 
     @Test
@@ -102,5 +104,40 @@ class FormControllerIntegrationTest extends AbstractPublicIntegrationTest {
                         .content(objectMapper.writeValueAsString(Map.of("email", "x@x.com"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CAMPAIGN_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("미공개 캠페인에 제출을 시도하면 404와 CAMPAIGN_NOT_PUBLISHED를 반환한다")
+    void submit_returns404_whenCampaignNotPublished() throws Exception {
+        Campaign campaign = createPublishedCampaign("submit-unpublished", "<html></html>");
+        campaign.unpublish();
+        campaignRepository.save(campaign);
+
+        mockMvc.perform(post("/f/submit-unpublished/submissions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", "x@x.com"))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("CAMPAIGN_NOT_PUBLISHED"));
+    }
+
+    // 링크 토큰이 다른 캠페인 소속이면 성과 데이터가 오염될 수 있다 (실수든 조작이든).
+    // 크로스 캠페인 검증이 없으면 이 테스트가 실패해야 정상인데, 라이브 검증 없이
+    // 코드 리뷰로만 발견한 버그라 회귀 테스트로 고정해둔다.
+    @Test
+    @DisplayName("링크 토큰이 다른 캠페인 소속이면 404와 LINK_NOT_FOUND를 반환한다")
+    void submit_returns404_whenLinkBelongsToDifferentCampaign() throws Exception {
+        Campaign campaignA = createPublishedCampaign("cross-campaign-a", "<html></html>");
+        Campaign campaignB = createPublishedCampaign("cross-campaign-b", "<html></html>");
+        DistributionLink linkOfB = createLink(campaignB, Channel.X);
+
+        mockMvc.perform(post("/f/cross-campaign-a/submissions")
+                        .param("link", linkOfB.getLinkToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", "x@x.com"))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("LINK_NOT_FOUND"));
+
+        assertThat(submissionRepository.findAll())
+                .noneMatch(submission -> submission.getCampaignId().equals(campaignA.getId()));
     }
 }
