@@ -12,11 +12,22 @@
    ```
    docker compose --env-file .env up -d
    ```
-3. 애플리케이션을 실행한다 (Flyway 마이그레이션이 기동 시 자동 적용된다).
+3. 관리자 서버를 실행한다 (Flyway 마이그레이션이 기동 시 자동 적용된다. 데모용 운영자
+   계정도 이때 함께 시드된다).
    ```
-   ./gradlew :bootstrap:bootRun
+   ./gradlew :admin-bootstrap:bootRun
    ```
-4. 기본 포트는 `8080`이다.
+   포트 `8080`. 로그인: `POST /admin/auth/login`
+   ```json
+   { "email": "operator@glowuprizz.com", "password": "glowup1234!" }
+   ```
+   응답의 `accessToken`을 이후 요청에 `Authorization: Bearer <token>` 헤더로 사용한다.
+4. 공개 폼 서버를 별도 프로세스로 실행한다 (관리자 서버와 다른 포트 = 다른 origin으로
+   띄우는 것이 의도적인 설계다. `docs/adr/0011` 참고).
+   ```
+   ./gradlew :public-bootstrap:bootRun
+   ```
+   포트 `8081`.
 
 ## 테스트 방법
 
