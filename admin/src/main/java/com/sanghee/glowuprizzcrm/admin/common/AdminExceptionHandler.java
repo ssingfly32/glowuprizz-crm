@@ -33,7 +33,7 @@ public class AdminExceptionHandler {
     private HttpStatus toHttpStatus(ErrorCode errorCode) {
         return switch (errorCode) {
             case AUTH_INVALID_CREDENTIALS -> HttpStatus.UNAUTHORIZED;
-            case TEMPLATE_NOT_FOUND, CAMPAIGN_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case TEMPLATE_NOT_FOUND, CAMPAIGN_NOT_FOUND, LINK_NOT_FOUND -> HttpStatus.NOT_FOUND;
             default -> HttpStatus.BAD_REQUEST;
         };
     }

@@ -1,6 +1,8 @@
 package com.sanghee.glowuprizzcrm.admin.link;
 
 import com.sanghee.glowuprizzcrm.admin.campaign.CampaignService;
+import com.sanghee.glowuprizzcrm.core.common.exception.BusinessException;
+import com.sanghee.glowuprizzcrm.core.common.exception.ErrorCode;
 import com.sanghee.glowuprizzcrm.core.link.Channel;
 import com.sanghee.glowuprizzcrm.core.link.DistributionLink;
 import com.sanghee.glowuprizzcrm.core.link.DistributionLinkRepository;
@@ -34,5 +36,10 @@ public class DistributionLinkService {
     public List<DistributionLink> findByCampaignId(Long campaignId) {
         campaignService.getOrThrow(campaignId);
         return distributionLinkRepository.findByCampaignId(campaignId);
+    }
+
+    public DistributionLink getOrThrow(Long id) {
+        return distributionLinkRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.LINK_NOT_FOUND));
     }
 }

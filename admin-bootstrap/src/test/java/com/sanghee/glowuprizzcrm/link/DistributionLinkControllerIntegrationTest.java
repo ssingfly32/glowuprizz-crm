@@ -2,6 +2,7 @@ package com.sanghee.glowuprizzcrm.link;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,6 +11,7 @@ import com.sanghee.glowuprizzcrm.admin.campaign.CampaignCreateRequest;
 import com.sanghee.glowuprizzcrm.admin.link.DistributionLinkCreateRequest;
 import com.sanghee.glowuprizzcrm.admin.template.HtmlTemplateCreateRequest;
 import com.sanghee.glowuprizzcrm.core.link.Channel;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
@@ -62,6 +64,7 @@ class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegration
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
+                .andExpect(header().string("Location", Matchers.matchesRegex(".*/admin/campaigns/" + campaignId + "/links/\\d+")))
                 .andExpect(jsonPath("$.channel").value("INSTAGRAM"))
                 .andExpect(jsonPath("$.linkToken").isNotEmpty());
     }

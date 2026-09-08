@@ -2,8 +2,8 @@ package com.sanghee.glowuprizzcrm.admin.template;
 
 import com.sanghee.glowuprizzcrm.core.template.HtmlTemplate;
 import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
 @RequestMapping("/admin/html-templates")
@@ -28,7 +29,11 @@ public class HtmlTemplateController {
             @AuthenticationPrincipal Long operatorId,
             @Valid @RequestBody HtmlTemplateCreateRequest request) {
         HtmlTemplate template = htmlTemplateService.register(operatorId, request.name(), request.content());
-        return ResponseEntity.status(HttpStatus.CREATED).body(HtmlTemplateResponse.from(template));
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(template.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(HtmlTemplateResponse.from(template));
     }
 
     @GetMapping
