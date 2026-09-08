@@ -23,6 +23,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    // OncePerRequestFilter는 기본적으로 /error로의 내부 재디스패치(ERROR dispatch)에는
+    // 다시 적용되지 않는다. 그러면 예외 처리 과정에서 SecurityContext의 인증 정보가 사라져
+    // 정상 요청이 401로 잘못 보일 수 있다 (라이브 검증 중 실제로 재현됨). 방어적으로 켜둔다.
+    @Override
+    protected boolean shouldNotFilterErrorDispatch() {
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
