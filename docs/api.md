@@ -44,8 +44,9 @@ Authorization: Bearer <accessToken>
 | `VALIDATION_FAILED` | 400 | 요청 바디 검증 실패 |
 | `TEMPLATE_NOT_FOUND` | 404 | HTML 템플릿 없음 |
 | `CAMPAIGN_NOT_FOUND` | 404 | 캠페인 없음 |
-| `CAMPAIGN_NOT_PUBLISHED` | 404 | 공개되지 않은 캠페인 접근 (공개 폼 서버) |
+| `CAMPAIGN_NOT_PUBLISHED` | 404 | 캠페인은 존재하지만 공개되지 않음 (공개 폼 서버) |
 | `LINK_NOT_FOUND` | 404 | 배포 링크 없음, 또는 링크가 해당 캠페인 소속이 아님 |
+| `DUPLICATE_PUBLIC_SLUG` | 409 | 이미 사용 중인 publicSlug로 캠페인 생성 시도 |
 | `INVALID_PUBLIC_SLUG` / `INVALID_CAMPAIGN_NAME` 등 | 400 | 도메인 엔티티 생성자 검증 실패 |
 
 ---
@@ -120,7 +121,10 @@ Authorization: Bearer <accessToken>
   "publicSlug": "autumn-webinar", "published": false, "createdAt": "..."
 }
 ```
-실패: 템플릿 없음 `404` `TEMPLATE_NOT_FOUND`, 슬러그 형식 오류 `400` `INVALID_PUBLIC_SLUG`.
+- `publicSlug`는 캠페인 간 유일해야 한다.
+
+실패: 템플릿 없음 `404` `TEMPLATE_NOT_FOUND`, 슬러그 형식 오류 `400` `INVALID_PUBLIC_SLUG`,
+이미 사용 중인 슬러그 `409` `DUPLICATE_PUBLIC_SLUG`.
 
 ### `GET /admin/campaigns`
 캠페인 목록 조회.
@@ -231,7 +235,8 @@ Location: /f/{publicSlug}?link={linkToken}
 것으로 보고 중복 기록하지 않는다. 없으면(북마크 등 직접 접근) 채널 없는 방문으로 기록한다.
 
 응답: `Content-Type: text/html`, 등록된 HTML 원문(+ 제출 스크립트 삽입).
-실패: 슬러그 없음/비공개 캠페인 `404` `CAMPAIGN_NOT_PUBLISHED`.
+실패: 슬러그 자체가 없으면 `404` `CAMPAIGN_NOT_FOUND`, 캠페인은 있지만 비공개면 `404`
+`CAMPAIGN_NOT_PUBLISHED`.
 
 ### `POST /f/{slug}/submissions?link={linkToken}`
 신청 데이터를 제출한다. `link`가 주어지고 해당 캠페인 소속이 아니면 존재하지 않는 링크와
@@ -243,8 +248,8 @@ Location: /f/{publicSlug}?link={linkToken}
 { "name": "홍길동", "phone": "010-1234-5678", "email": "hong@example.com" }
 ```
 응답: `201 Created` (본문 없음)
-실패: 캠페인 없음/비공개 `404` `CAMPAIGN_NOT_PUBLISHED`, `link`가 다른 캠페인 소속 `404`
-`LINK_NOT_FOUND`.
+실패: 슬러그 자체가 없으면 `404` `CAMPAIGN_NOT_FOUND`, 비공개 캠페인이면 `404`
+`CAMPAIGN_NOT_PUBLISHED`, `link`가 다른 캠페인 소속이면 `404` `LINK_NOT_FOUND`.
 
 ---
 
