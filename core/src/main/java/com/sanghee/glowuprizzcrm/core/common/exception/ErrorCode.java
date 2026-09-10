@@ -15,7 +15,8 @@ public enum ErrorCode {
     TEMPLATE_NOT_FOUND("등록된 HTML 템플릿을 찾을 수 없습니다."),
     CAMPAIGN_NOT_FOUND("캠페인을 찾을 수 없습니다."),
     CAMPAIGN_NOT_PUBLISHED("공개되지 않은 캠페인입니다."),
-    LINK_NOT_FOUND("배포 링크를 찾을 수 없습니다.");
+    LINK_NOT_FOUND("배포 링크를 찾을 수 없습니다."),
+    INTERNAL_ERROR("서버 내부 오류가 발생했습니다.");
 
     private final String message;
 
