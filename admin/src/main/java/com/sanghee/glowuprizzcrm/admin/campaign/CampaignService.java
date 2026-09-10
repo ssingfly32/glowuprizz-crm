@@ -24,6 +24,9 @@ public class CampaignService {
     @Transactional
     public Campaign register(Long operatorId, Long htmlTemplateId, String name, String publicSlug) {
         htmlTemplateService.getOrThrow(htmlTemplateId);
+        if (campaignRepository.findByPublicSlug(publicSlug).isPresent()) {
+            throw new BusinessException(ErrorCode.DUPLICATE_PUBLIC_SLUG);
+        }
         Campaign campaign = new Campaign(operatorId, htmlTemplateId, name, publicSlug);
         return campaignRepository.save(campaign);
     }

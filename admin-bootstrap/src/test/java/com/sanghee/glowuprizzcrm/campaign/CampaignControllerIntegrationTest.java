@@ -75,6 +75,27 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     }
 
     @Test
+    @DisplayName("이미 사용 중인 publicSlug로 생성하면 409와 DUPLICATE_PUBLIC_SLUG를 반환한다")
+    void create_returns409_whenPublicSlugAlreadyExists() throws Exception {
+        String token = obtainAccessToken();
+        Long templateId = registerTemplate(token);
+        var firstRequest = new CampaignCreateRequest(templateId, "가을 웨비나", "duplicate-slug");
+        mockMvc.perform(post("/admin/campaigns")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(firstRequest)))
+                .andExpect(status().isCreated());
+
+        var secondRequest = new CampaignCreateRequest(templateId, "겨울 웨비나", "duplicate-slug");
+        mockMvc.perform(post("/admin/campaigns")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(secondRequest)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("DUPLICATE_PUBLIC_SLUG"));
+    }
+
+    @Test
     @DisplayName("publicSlug 형식이 잘못되면 400을 반환한다")
     void create_returns400_whenSlugInvalid() throws Exception {
         String token = obtainAccessToken();

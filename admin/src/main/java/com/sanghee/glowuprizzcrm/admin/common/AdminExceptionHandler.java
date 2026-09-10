@@ -34,6 +34,7 @@ public class AdminExceptionHandler {
         return switch (errorCode) {
             case AUTH_INVALID_CREDENTIALS -> HttpStatus.UNAUTHORIZED;
             case TEMPLATE_NOT_FOUND, CAMPAIGN_NOT_FOUND, LINK_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case DUPLICATE_PUBLIC_SLUG -> HttpStatus.CONFLICT;
             default -> HttpStatus.BAD_REQUEST;
         };
     }
