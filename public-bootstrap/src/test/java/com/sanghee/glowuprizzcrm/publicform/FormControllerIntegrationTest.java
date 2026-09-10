@@ -17,6 +17,7 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
 
 @DisplayName("/f/{slug} 통합 테스트")
 class FormControllerIntegrationTest extends AbstractPublicIntegrationTest {
@@ -33,6 +34,24 @@ class FormControllerIntegrationTest extends AbstractPublicIntegrationTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("<script>")))
                 .andExpect(cookie().exists("visitor_token"))
                 .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.containsString("connect-src 'self'")));
+    }
+
+    // link 쿼리파라미터는 방문자가 임의로 조작 가능한 값인데, FormRenderService가 이를
+    // 이스케이프 없이 인라인 <script>의 문자열 리터럴에 그대로 삽입했다. 홑따옴표로 문자열을
+    // 끊고 임의 JS를 실행시키는 반사형 XSS였다 (라이브 PoC로 실제 재현 확인).
+    @Test
+    @DisplayName("link 쿼리파라미터에 악의적인 문자가 있어도 스크립트를 탈출하지 못한다 (XSS 방지)")
+    void getForm_escapesMaliciousLinkParam_toPreventXss() throws Exception {
+        createPublishedCampaign("xss-test", "<html><body><form></form></body></html>");
+        String maliciousLink = "');new Image().src='https://evil.example/steal';//";
+
+        MvcResult result = mockMvc.perform(get("/f/xss-test").param("link", maliciousLink))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String body = result.getResponse().getContentAsString();
+        assertThat(body).doesNotContain("');new Image()");
+        assertThat(body).contains("link=%27%29");
     }
 
     @Test
