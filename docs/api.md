@@ -161,7 +161,7 @@ Authorization: Bearer <accessToken>
 ```
 실패: 캠페인 없음 `404` `CAMPAIGN_NOT_FOUND`.
 
-실제로 배포할 URL은 공개 폼 서버의 `GET /r/{linkToken}`이다 (아래 6번 참고).
+실제로 배포할 URL은 공개 폼 서버의 `GET /r/{linkToken}`이다 (아래 7번 참고).
 
 ### `GET /admin/campaigns/{campaignId}/links`
 해당 캠페인의 배포 링크 목록 조회.
@@ -226,7 +226,43 @@ Authorization: Bearer <accessToken>
 
 ---
 
-## 6. 공개 폼 흐름 API (public, 8081, 인증 불필요)
+## 6. 신청자 명단(CRM) 조회 API (admin, 8080)
+
+운영자가 캠페인에 모인 신청자 원본 데이터를 조회한다. 5번 성과 조회 API가 집계(카운트,
+전환율)만 보여주는 것과 달리, 여기서는 신청 시 제출된 실제 필드 값(이름/연락처 등)을 그대로
+반환한다.
+
+### `GET /admin/campaigns/{campaignId}/submissions`
+응답 `200 OK`, 최신 신청순(내림차순).
+```json
+[
+  {
+    "id": 2,
+    "campaignId": 1,
+    "distributionLinkId": 5,
+    "channel": "X",
+    "visitorToken": "b6b5...uuid",
+    "data": { "name": "김철수", "phone": "010-3333-4444" },
+    "submittedAt": "2026-09-12T03:30:00Z"
+  },
+  {
+    "id": 1,
+    "campaignId": 1,
+    "distributionLinkId": 4,
+    "channel": "INSTAGRAM",
+    "visitorToken": "a1a1...uuid",
+    "data": { "name": "홍길동", "phone": "010-1111-2222" },
+    "submittedAt": "2026-09-12T03:25:00Z"
+  }
+]
+```
+`data`는 신청 시점에 제출된 스키마리스 JSON을 그대로 반환한다(`docs/adr/0003`) — 등록된
+HTML마다 필드 구성이 다를 수 있다. 신청이 없으면 빈 배열을 반환한다.
+실패: 캠페인 없음 `404` `CAMPAIGN_NOT_FOUND`.
+
+---
+
+## 7. 공개 폼 흐름 API (public, 8081, 인증 불필요)
 
 방문자가 배포 링크를 클릭해 폼을 보고 신청을 제출하는 흐름이다. 이 서버는 `admin` 서버와
 완전히 다른 프로세스/포트/오리진이며, 관리자 JWT나 `/admin/**` API에 접근할 방법이 없다
@@ -302,4 +338,7 @@ curl -s -b cookies.txt -c cookies.txt \
 
 # 6) 성과 확인
 curl -s http://localhost:8080/admin/campaigns/$CAMPAIGN_ID/stats -H "Authorization: Bearer $TOKEN"
+
+# 7) 신청자 명단(CRM) 확인
+curl -s http://localhost:8080/admin/campaigns/$CAMPAIGN_ID/submissions -H "Authorization: Bearer $TOKEN"
 ```
