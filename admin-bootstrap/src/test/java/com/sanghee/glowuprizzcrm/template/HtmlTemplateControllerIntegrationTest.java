@@ -1,30 +1,33 @@
 package com.sanghee.glowuprizzcrm.template;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sanghee.glowuprizzcrm.AbstractAdminIntegrationTest;
-import com.sanghee.glowuprizzcrm.admin.template.HtmlTemplateCreateRequest;
+import java.nio.charset.StandardCharsets;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 
 @DisplayName("/admin/html-templates 통합 테스트")
 class HtmlTemplateControllerIntegrationTest extends AbstractAdminIntegrationTest {
 
+    private MockMultipartFile htmlFile(String filename, String content) {
+        return new MockMultipartFile("file", filename, MediaType.TEXT_HTML_VALUE, content.getBytes(StandardCharsets.UTF_8));
+    }
+
     @Test
     @DisplayName("인증 없이 등록하면 401을 반환한다")
     void register_returns401_whenNoToken() throws Exception {
-        HtmlTemplateCreateRequest request = new HtmlTemplateCreateRequest("무인증 테스트", "<html></html>");
-
-        mockMvc.perform(post("/admin/html-templates")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/admin/html-templates")
+                        .file(htmlFile("template.html", "<html></html>"))
+                        .param("name", "무인증 테스트"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -32,44 +35,51 @@ class HtmlTemplateControllerIntegrationTest extends AbstractAdminIntegrationTest
     @DisplayName("정상 등록하면 201과 생성된 템플릿 정보를 반환한다")
     void register_returns201_whenValid() throws Exception {
         String token = obtainAccessToken();
-        HtmlTemplateCreateRequest request = new HtmlTemplateCreateRequest("정상 등록 테스트", "<html><body><form>x</form></body></html>");
 
-        mockMvc.perform(post("/admin/html-templates")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/admin/html-templates")
+                        .file(htmlFile("template.html", "<html><body><form>x</form></body></html>"))
+                        .param("name", "정상 등록 테스트")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", Matchers.matchesRegex(".*/admin/html-templates/\\d+")))
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.name").value("정상 등록 테스트"));
     }
 
-    // 이 테스트는 라이브 검증 중 실제로 재현됐던 회귀 버그를 고정한다:
-    // @Valid 검증 실패가 /error 재디스패치를 타면서 JwtAuthenticationFilter가 인증정보를
-    // 못 심어 401로 잘못 보이던 문제 (docs/adr 언급 없음, PR #2 설명 참고). 400이어야 한다.
     @Test
-    @DisplayName("content가 비어있으면 400과 VALIDATION_FAILED를 반환한다 (401이 아니어야 함)")
-    void register_returns400_whenContentIsBlank() throws Exception {
+    @DisplayName("파일 내용이 비어있으면 400과 INVALID_TEMPLATE_CONTENT를 반환한다 (401이 아니어야 함)")
+    void register_returns400_whenFileContentIsBlank() throws Exception {
         String token = obtainAccessToken();
-        HtmlTemplateCreateRequest request = new HtmlTemplateCreateRequest("빈 콘텐츠", "");
 
-        mockMvc.perform(post("/admin/html-templates")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/admin/html-templates")
+                        .file(htmlFile("empty.html", ""))
+                        .param("name", "빈 파일")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+                .andExpect(jsonPath("$.code").value("INVALID_TEMPLATE_CONTENT"));
+    }
+
+    @Test
+    @DisplayName("확장자가 .html이 아니면 400과 INVALID_TEMPLATE_FILE_EXTENSION을 반환한다")
+    void register_returns400_whenFileExtensionIsNotHtml() throws Exception {
+        String token = obtainAccessToken();
+
+        mockMvc.perform(multipart("/admin/html-templates")
+                        .file(htmlFile("template.txt", "<html></html>"))
+                        .param("name", "잘못된 확장자")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_TEMPLATE_FILE_EXTENSION"));
     }
 
     @Test
     @DisplayName("등록한 템플릿 목록을 조회할 수 있다")
     void list_returnsRegisteredTemplates() throws Exception {
         String token = obtainAccessToken();
-        HtmlTemplateCreateRequest request = new HtmlTemplateCreateRequest("목록 조회 테스트", "<html></html>");
-        mockMvc.perform(post("/admin/html-templates")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart("/admin/html-templates")
+                        .file(htmlFile("template.html", "<html></html>"))
+                        .param("name", "목록 조회 테스트")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(get("/admin/html-templates")

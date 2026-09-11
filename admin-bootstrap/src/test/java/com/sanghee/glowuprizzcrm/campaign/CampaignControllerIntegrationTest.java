@@ -1,6 +1,7 @@
 package com.sanghee.glowuprizzcrm.campaign;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -8,12 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.sanghee.glowuprizzcrm.AbstractAdminIntegrationTest;
 import com.sanghee.glowuprizzcrm.admin.campaign.CampaignCreateRequest;
-import com.sanghee.glowuprizzcrm.admin.template.HtmlTemplateCreateRequest;
+import java.nio.charset.StandardCharsets;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.JsonNode;
 
@@ -21,11 +23,13 @@ import tools.jackson.databind.JsonNode;
 class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
 
     private Long registerTemplate(String token) throws Exception {
-        HtmlTemplateCreateRequest request = new HtmlTemplateCreateRequest("캠페인 테스트용 템플릿", "<html><body><form>x</form></body></html>");
-        MvcResult result = mockMvc.perform(post("/admin/html-templates")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "template.html", MediaType.TEXT_HTML_VALUE,
+                "<html><body><form>x</form></body></html>".getBytes(StandardCharsets.UTF_8));
+        MvcResult result = mockMvc.perform(multipart("/admin/html-templates")
+                        .file(file)
+                        .param("name", "캠페인 테스트용 템플릿")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andReturn();
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
         return json.path("id").asLong();

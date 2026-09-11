@@ -1,23 +1,25 @@
 package com.sanghee.glowuprizzcrm.stats;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.sanghee.glowuprizzcrm.AbstractAdminIntegrationTest;
 import com.sanghee.glowuprizzcrm.admin.campaign.CampaignCreateRequest;
-import com.sanghee.glowuprizzcrm.admin.template.HtmlTemplateCreateRequest;
 import com.sanghee.glowuprizzcrm.core.link.Channel;
 import com.sanghee.glowuprizzcrm.core.submission.Submission;
 import com.sanghee.glowuprizzcrm.core.submission.SubmissionRepository;
 import com.sanghee.glowuprizzcrm.core.visit.Visit;
 import com.sanghee.glowuprizzcrm.core.visit.VisitRepository;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 
 @DisplayName("/admin/channels/stats 통합 테스트")
@@ -30,11 +32,12 @@ class ChannelStatsControllerIntegrationTest extends AbstractAdminIntegrationTest
     private SubmissionRepository submissionRepository;
 
     private long createCampaign(String token, String publicSlug) throws Exception {
-        HtmlTemplateCreateRequest templateRequest = new HtmlTemplateCreateRequest("전역 채널 성과 테스트용 템플릿", "<html></html>");
-        MvcResult templateResult = mockMvc.perform(post("/admin/html-templates")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(templateRequest)))
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "template.html", MediaType.TEXT_HTML_VALUE, "<html></html>".getBytes(StandardCharsets.UTF_8));
+        MvcResult templateResult = mockMvc.perform(multipart("/admin/html-templates")
+                        .file(file)
+                        .param("name", "전역 채널 성과 테스트용 템플릿")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andReturn();
         long templateId = objectMapper.readTree(templateResult.getResponse().getContentAsString())
                 .path("id").asLong();

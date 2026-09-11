@@ -1,6 +1,7 @@
 package com.sanghee.glowuprizzcrm.link;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -9,13 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.sanghee.glowuprizzcrm.AbstractAdminIntegrationTest;
 import com.sanghee.glowuprizzcrm.admin.campaign.CampaignCreateRequest;
 import com.sanghee.glowuprizzcrm.admin.link.DistributionLinkCreateRequest;
-import com.sanghee.glowuprizzcrm.admin.template.HtmlTemplateCreateRequest;
 import com.sanghee.glowuprizzcrm.core.link.Channel;
+import java.nio.charset.StandardCharsets;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.JsonNode;
 
@@ -23,11 +25,12 @@ import tools.jackson.databind.JsonNode;
 class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegrationTest {
 
     private long createCampaign(String token) throws Exception {
-        HtmlTemplateCreateRequest templateRequest = new HtmlTemplateCreateRequest("링크 테스트용 템플릿", "<html></html>");
-        MvcResult templateResult = mockMvc.perform(post("/admin/html-templates")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(templateRequest)))
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "template.html", MediaType.TEXT_HTML_VALUE, "<html></html>".getBytes(StandardCharsets.UTF_8));
+        MvcResult templateResult = mockMvc.perform(multipart("/admin/html-templates")
+                        .file(file)
+                        .param("name", "링크 테스트용 템플릿")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andReturn();
         long templateId = objectMapper.readTree(templateResult.getResponse().getContentAsString())
                 .path("id").asLong();
