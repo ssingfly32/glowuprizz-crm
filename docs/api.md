@@ -173,12 +173,16 @@ Authorization: Bearer <accessToken>
 
 ## 5. 성과 조회 API (admin, 8080)
 
-캠페인별 방문/방문자/신청/전환율과 채널별 성과를 한 번에 조회한다. 채널별 성과는 캠페인
-하위 스코프로 제공한다 (`docs/adr/0013` 참고). 전환율 = 신청 수 / 순 방문자(고유
-`visitorToken`) 수, 소수 넷째 자리 반올림 (`docs/adr/0006`). 순 방문자가 0명이면
-`conversionRate`는 `0`이다. 방문/신청이 1건도 없었던 채널은 `channels`에 나타나지 않는다.
+캠페인별 방문/방문자/신청/전환율과 채널별 성과를 조회한다. 요구사항의 "캠페인별 방문·방문자·
+신청·전환율"과 "채널별 성과"는 별개 항목이므로, 캠페인 상세 화면용(캠페인 하위 스코프)과
+전체 채널 비교용(전역 스코프) 엔드포인트를 각각 제공한다 (`docs/adr/0013` 참고). 전환율 =
+신청 수 / 순 방문자(고유 `visitorToken`) 수, 소수 넷째 자리 반올림 (`docs/adr/0006`). 순
+방문자가 0명이면 `conversionRate`는 `0`이다. 방문/신청이 1건도 없었던 채널은 `channels`
+(또는 전역 응답 배열)에 나타나지 않는다.
 
 ### `GET /admin/campaigns/{campaignId}/stats`
+캠페인 하나의 전체 지표 + 그 안에서의 채널별 breakdown.
+
 응답 `200 OK`
 ```json
 {
@@ -206,6 +210,19 @@ Authorization: Bearer <accessToken>
 }
 ```
 실패: 캠페인 없음 `404` `CAMPAIGN_NOT_FOUND`.
+
+### `GET /admin/channels/stats`
+모든 캠페인을 가로질러 채널 기준으로 합산한 전역 성과. "어느 채널이 전체적으로 잘 되는가"를
+캠페인별로 조회를 반복하지 않고 한 번에 비교하기 위한 엔드포인트다.
+
+응답 `200 OK`
+```json
+[
+  { "channel": "INSTAGRAM", "visitCount": 12, "visitorCount": 9, "submissionCount": 5, "conversionRate": 0.5556 },
+  { "channel": "X", "visitCount": 4, "visitorCount": 4, "submissionCount": 1, "conversionRate": 0.25 }
+]
+```
+데이터가 전혀 없으면 빈 배열을 반환한다.
 
 ---
 
