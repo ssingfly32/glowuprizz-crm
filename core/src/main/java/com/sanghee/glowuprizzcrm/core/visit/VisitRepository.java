@@ -17,4 +17,10 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
             + "FROM Visit v WHERE v.campaignId = :campaignId AND v.channel IS NOT NULL "
             + "GROUP BY v.channel")
     List<ChannelVisitStats> countByCampaignIdGroupByChannel(@Param("campaignId") Long campaignId);
+
+    @Query("SELECT v.channel AS channel, COUNT(v) AS visitCount, "
+            + "COUNT(DISTINCT v.visitorToken) AS visitorCount "
+            + "FROM Visit v WHERE v.channel IS NOT NULL "
+            + "GROUP BY v.channel")
+    List<ChannelVisitStats> countGroupByChannel();
 }
