@@ -63,10 +63,31 @@ subprojects {
 	}
 }
 
+// bootRun은 docker compose와 달리 .env를 자동으로 읽지 않는다. 셸에 직접 export하지
+// 않아도 되도록, bootRun 실행 전에 루트 .env를 읽어 해당 JavaExec 프로세스의 환경변수로
+// 주입한다 (README의 실행 절차가 셸 종류와 무관하게 그대로 동작하게 하기 위함).
+def loadDotEnvInto = { task ->
+	def envFile = rootProject.file('.env')
+	if (!envFile.exists()) {
+		return
+	}
+	envFile.readLines().each { line ->
+		line = line.trim()
+		if (line && !line.startsWith('#')) {
+			def index = line.indexOf('=')
+			if (index > 0) {
+				task.environment(line.substring(0, index).trim(), line.substring(index + 1).trim())
+			}
+		}
+	}
+}
+
 project(':admin-bootstrap') {
 	apply plugin: 'org.springframework.boot'
+	tasks.named('bootRun') { doFirst { loadDotEnvInto(it) } }
 }
 
 project(':public-bootstrap') {
 	apply plugin: 'org.springframework.boot'
+	tasks.named('bootRun') { doFirst { loadDotEnvInto(it) } }
 }
