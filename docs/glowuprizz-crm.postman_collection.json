@@ -1,0 +1,325 @@
+{
+  "info": {
+    "name": "glowuprizz-crm",
+    "description": "리드마그넷 CRM 운영 시스템 API 컬렉션. admin(8080)/public(8081) 두 서버로 구성되어 있다 (docs/adr/0011 참고). 로그인 요청을 실행하면 accessToken이 자동으로 컬렉션 변수에 저장되어 이후 admin 요청에 자동 적용된다.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "adminBaseUrl", "value": "http://localhost:8080" },
+    { "key": "publicBaseUrl", "value": "http://localhost:8081" },
+    { "key": "token", "value": "" },
+    { "key": "templateId", "value": "" },
+    { "key": "campaignId", "value": "" },
+    { "key": "publicSlug", "value": "autumn-webinar" },
+    { "key": "linkToken", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1. 인증",
+      "item": [
+        {
+          "name": "로그인",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "auth": { "type": "noauth" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"operator@glowuprizz.com\",\n  \"password\": \"glowup1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/auth/login",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token', json.accessToken);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. HTML 템플릿 관리",
+      "item": [
+        {
+          "name": "등록 (파일 업로드)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "가을 웨비나 신청폼", "type": "text" },
+                { "key": "file", "type": "file", "src": [], "description": "여기에 .html 파일을 직접 선택하세요 (예: <html><body><form><input name=\"name\"><button>신청</button></form></body></html>)" }
+              ]
+            },
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/html-templates",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "html-templates"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('templateId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "목록 조회",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/html-templates",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "html-templates"]
+            }
+          }
+        },
+        {
+          "name": "단건 조회",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/html-templates/{{templateId}}",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "html-templates", "{{templateId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. 캠페인 관리",
+      "item": [
+        {
+          "name": "생성",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"htmlTemplateId\": {{templateId}},\n  \"name\": \"가을 웨비나\",\n  \"publicSlug\": \"{{publicSlug}}\"\n}"
+            },
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('campaignId', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "목록 조회",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns"]
+            }
+          }
+        },
+        {
+          "name": "단건 조회",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns/{{campaignId}}",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns", "{{campaignId}}"]
+            }
+          }
+        },
+        {
+          "name": "공개(publish)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns/{{campaignId}}/publish",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns", "{{campaignId}}", "publish"]
+            }
+          }
+        },
+        {
+          "name": "비공개(unpublish)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns/{{campaignId}}/unpublish",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns", "{{campaignId}}", "unpublish"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. 배포 링크",
+      "item": [
+        {
+          "name": "생성 (INSTAGRAM)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"INSTAGRAM\"\n}"
+            },
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns/{{campaignId}}/links",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns", "{{campaignId}}", "links"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('linkToken', pm.response.json().linkToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "목록 조회",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns/{{campaignId}}/links",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns", "{{campaignId}}", "links"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. 성과 조회",
+      "item": [
+        {
+          "name": "캠페인별 성과",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns/{{campaignId}}/stats",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns", "{{campaignId}}", "stats"]
+            }
+          }
+        },
+        {
+          "name": "전역 채널별 성과",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/channels/stats",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "channels", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. 신청자 명단(CRM)",
+      "item": [
+        {
+          "name": "캠페인별 신청자 목록",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/campaigns/{{campaignId}}/submissions",
+              "host": ["{{adminBaseUrl}}"],
+              "path": ["admin", "campaigns", "{{campaignId}}", "submissions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. 공개 폼 흐름 (인증 불필요)",
+      "item": [
+        {
+          "name": "배포 링크 클릭 (리다이렉트)",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{publicBaseUrl}}/r/{{linkToken}}",
+              "host": ["{{publicBaseUrl}}"],
+              "path": ["r", "{{linkToken}}"]
+            },
+            "description": "Postman은 기본적으로 302 리다이렉트를 자동으로 따라간다. 방문 기록 확인이 목적이면 Settings에서 'Automatically follow redirects'를 꺼도 된다."
+          }
+        },
+        {
+          "name": "공개 폼 렌더링",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "url": {
+              "raw": "{{publicBaseUrl}}/f/{{publicSlug}}?link={{linkToken}}",
+              "host": ["{{publicBaseUrl}}"],
+              "path": ["f", "{{publicSlug}}"],
+              "query": [{ "key": "link", "value": "{{linkToken}}" }]
+            }
+          }
+        },
+        {
+          "name": "신청 제출",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"홍길동\",\n  \"phone\": \"010-1234-5678\"\n}"
+            },
+            "url": {
+              "raw": "{{publicBaseUrl}}/f/{{publicSlug}}/submissions?link={{linkToken}}",
+              "host": ["{{publicBaseUrl}}"],
+              "path": ["f", "{{publicSlug}}", "submissions"],
+              "query": [{ "key": "link", "value": "{{linkToken}}" }]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
