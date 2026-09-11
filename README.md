@@ -22,6 +22,10 @@
    { "email": "operator@glowuprizz.com", "password": "glowup1234!" }
    ```
    응답의 `accessToken`을 이후 요청에 `Authorization: Bearer <token>` 헤더로 사용한다.
+
+   매 요청을 직접 만들기 번거로우면 `docs/glowuprizz-crm.postman_collection.json`을
+   Postman에 import한다. 로그인 요청을 실행하면 `accessToken`이 컬렉션 변수에 자동
+   저장되어 이후 admin 요청에 자동 적용된다.
 4. 공개 폼 서버를 별도 프로세스로 실행한다 (관리자 서버와 다른 포트 = 다른 origin으로
    띄우는 것이 의도적인 설계다. `docs/adr/0011` 참고).
    ```
