@@ -17,7 +17,7 @@ graph TD
 
     subgraph AD["admin"]
         AAuth["auth<br/>(로그인, JWT 발급/검증, SecurityConfig)"]
-        ACore["template / campaign / link / stats"]
+        ACore["template / campaign / link / stats / submission"]
     end
 
     subgraph PF["publicform"]
@@ -88,6 +88,10 @@ sequenceDiagram
     Operator->>Admin: GET /admin/channels/stats
     Admin->>DB: 방문/방문자/신청 집계 (전체 캠페인, 채널 기준)
     Admin-->>Operator: 전역 채널별 성과
+
+    Operator->>Admin: GET /admin/campaigns/{id}/submissions
+    Admin->>DB: 신청 원본 데이터 조회
+    Admin-->>Operator: 신청자 명단(CRM)
 ```
 
 세부 API 스펙은 `docs/api.md`, 각 설계 결정의 근거는 `docs/adr/`를 참고한다.
