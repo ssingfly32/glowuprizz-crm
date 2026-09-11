@@ -1,3 +1,4 @@
+
 # API 문서
 
 리드마그넷 CRM 운영 시스템의 API 문서다. 두 개의 독립 프로세스로 구성되어 있다
@@ -9,6 +10,10 @@
 | public-bootstrap | `http://localhost:8081` | 익명 방문자 전용 (배포 링크 리다이렉트/공개 폼/신청 제출) |
 
 실행 방법은 저장소 루트 `README.md`를 참고한다.
+
+curl 없이 바로 눌러보고 싶다면 `docs/glowuprizz-crm.postman_collection.json`을 Postman에
+import한다. 로그인 요청을 실행하면 `accessToken`이 컬렉션 변수에 자동 저장되어 이후
+admin 요청에 자동 적용된다.
 
 ## 공통 사항
 
@@ -48,6 +53,7 @@ Authorization: Bearer <accessToken>
 | `LINK_NOT_FOUND` | 404 | 배포 링크 없음, 또는 링크가 해당 캠페인 소속이 아님 |
 | `DUPLICATE_PUBLIC_SLUG` | 409 | 이미 사용 중인 publicSlug로 캠페인 생성 시도 |
 | `INVALID_PUBLIC_SLUG` / `INVALID_CAMPAIGN_NAME` 등 | 400 | 도메인 엔티티 생성자 검증 실패 |
+| `INVALID_TEMPLATE_FILE_EXTENSION` | 400 | 업로드한 파일 확장자가 `.html`이 아님 |
 
 ---
 
@@ -74,18 +80,26 @@ Authorization: Bearer <accessToken>
 
 ## 2. HTML 템플릿 관리 API (admin, 8080)
 
-운영자가 AI로 만든 단일 `.html` 파일을 등록한다. 이후 캠페인 생성 시 참조한다.
+운영자가 AI로 만든 단일 `.html` 파일을 그대로 업로드해 등록한다. 이후 캠페인 생성 시
+참조한다 (`docs/adr/0016` 참고).
 
 ### `POST /admin/html-templates`
-요청
-```json
-{ "name": "가을 웨비나 신청폼", "content": "<html>...</html>" }
+`multipart/form-data`. `name`(폼 필드)과 `file`(`.html` 파일 파트)을 함께 보낸다.
+
+요청 (curl)
+```bash
+curl -X POST http://localhost:8080/admin/html-templates \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "name=가을 웨비나 신청폼" \
+  -F "file=@webinar.html"
 ```
 응답 `201 Created`, `Location: /admin/html-templates/{id}`
 ```json
 { "id": 1, "name": "가을 웨비나 신청폼", "createdAt": "2026-09-10T12:00:00Z" }
 ```
-실패: `content`/`name`이 비어있으면 `400` `VALIDATION_FAILED`.
+실패: `name`이 비어있거나 파일 내용이 비어있으면 `400` `INVALID_TEMPLATE_NAME` /
+`INVALID_TEMPLATE_CONTENT`. 파일 확장자가 `.html`이 아니면 `400`
+`INVALID_TEMPLATE_FILE_EXTENSION`.
 
 ### `GET /admin/html-templates`
 등록된 템플릿 목록 조회 (content 제외 요약 정보).
@@ -314,10 +328,11 @@ TOKEN=$(curl -s -X POST http://localhost:8080/admin/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"operator@glowuprizz.com","password":"glowup1234!"}' | jq -r .accessToken)
 
-# 2) HTML 템플릿 등록
+# 2) HTML 템플릿 등록 (AI가 만든 .html 파일을 그대로 업로드)
+echo '<html><body><form>...</form></body></html>' > webinar.html
 TEMPLATE_ID=$(curl -s -X POST http://localhost:8080/admin/html-templates \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"name":"가을 웨비나","content":"<html><body><form>...</form></body></html>"}' | jq -r .id)
+  -H "Authorization: Bearer $TOKEN" \
+  -F "name=가을 웨비나" -F "file=@webinar.html" | jq -r .id)
 
 # 3) 캠페인 생성 + 공개
 CAMPAIGN_ID=$(curl -s -X POST http://localhost:8080/admin/campaigns \
