@@ -37,6 +37,9 @@
 
 - `core` 모듈은 Spring/DB 없이 도메인 엔티티의 생성자 검증 로직만 검증하는 순수
   단위 테스트다 (밀리초 단위로 빠르게 끝남).
+- `admin`/`publicform` 모듈에도 Spring 컨텍스트 없이 순수 로직/Mockito만으로 검증하는
+  단위 테스트가 있다 (전환율 계산, 제출 스크립트 삽입, 리포지토리를 목으로 만든 동시성
+  예외 변환 로직 등).
 - `admin-bootstrap`/`public-bootstrap` 모듈은 Testcontainers로 실제 PostgreSQL
   컨테이너를 띄워, Security 필터 체인/Flyway 마이그레이션/JPA까지 전부 실제로
   동작하는 상태에서 검증하는 통합 테스트다 (별도 DB 실행 불필요, Docker만 있으면 됨).

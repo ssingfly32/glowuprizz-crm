@@ -82,8 +82,12 @@ sequenceDiagram
     Public->>DB: Submission 저장
 
     Operator->>Admin: GET /admin/campaigns/{id}/stats
-    Admin->>DB: 방문/방문자/신청 집계
-    Admin-->>Operator: 캠페인/채널별 성과
+    Admin->>DB: 방문/방문자/신청 집계 (캠페인 스코프)
+    Admin-->>Operator: 캠페인 전체 + 캠페인 하위 채널별 성과
+
+    Operator->>Admin: GET /admin/channels/stats
+    Admin->>DB: 방문/방문자/신청 집계 (전체 캠페인, 채널 기준)
+    Admin-->>Operator: 전역 채널별 성과
 ```
 
 세부 API 스펙은 `docs/api.md`, 각 설계 결정의 근거는 `docs/adr/`를 참고한다.
