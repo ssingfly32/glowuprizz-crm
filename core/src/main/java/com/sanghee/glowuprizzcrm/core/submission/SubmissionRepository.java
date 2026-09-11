@@ -9,6 +9,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     long countByCampaignId(Long campaignId);
 
+    List<Submission> findByCampaignIdOrderBySubmittedAtDesc(Long campaignId);
+
     @Query("SELECT s.channel AS channel, COUNT(s) AS submissionCount "
             + "FROM Submission s WHERE s.campaignId = :campaignId AND s.channel IS NOT NULL "
             + "GROUP BY s.channel")
