@@ -21,7 +21,7 @@ import tools.jackson.databind.JsonNode;
 class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
 
     private Long registerTemplate(String token) throws Exception {
-        var request = new HtmlTemplateCreateRequest("캠페인 테스트용 템플릿", "<html><body><form>x</form></body></html>");
+        HtmlTemplateCreateRequest request = new HtmlTemplateCreateRequest("캠페인 테스트용 템플릿", "<html><body><form>x</form></body></html>");
         MvcResult result = mockMvc.perform(post("/admin/html-templates")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -34,7 +34,7 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     @Test
     @DisplayName("인증 없이 생성하면 401을 반환한다")
     void create_returns401_whenNoToken() throws Exception {
-        var request = new CampaignCreateRequest(1L, "가을 웨비나", "autumn-webinar");
+        CampaignCreateRequest request = new CampaignCreateRequest(1L, "가을 웨비나", "autumn-webinar");
 
         mockMvc.perform(post("/admin/campaigns")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -47,7 +47,7 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     void create_returns201_whenValid() throws Exception {
         String token = obtainAccessToken();
         Long templateId = registerTemplate(token);
-        var request = new CampaignCreateRequest(templateId, "가을 웨비나", "autumn-webinar");
+        CampaignCreateRequest request = new CampaignCreateRequest(templateId, "가을 웨비나", "autumn-webinar");
 
         mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -64,7 +64,7 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     @DisplayName("존재하지 않는 템플릿 id로 생성하면 404와 TEMPLATE_NOT_FOUND를 반환한다")
     void create_returns404_whenTemplateNotFound() throws Exception {
         String token = obtainAccessToken();
-        var request = new CampaignCreateRequest(999999L, "가을 웨비나", "autumn-webinar-2");
+        CampaignCreateRequest request = new CampaignCreateRequest(999999L, "가을 웨비나", "autumn-webinar-2");
 
         mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -79,14 +79,14 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     void create_returns409_whenPublicSlugAlreadyExists() throws Exception {
         String token = obtainAccessToken();
         Long templateId = registerTemplate(token);
-        var firstRequest = new CampaignCreateRequest(templateId, "가을 웨비나", "duplicate-slug");
+        CampaignCreateRequest firstRequest = new CampaignCreateRequest(templateId, "가을 웨비나", "duplicate-slug");
         mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(firstRequest)))
                 .andExpect(status().isCreated());
 
-        var secondRequest = new CampaignCreateRequest(templateId, "겨울 웨비나", "duplicate-slug");
+        CampaignCreateRequest secondRequest = new CampaignCreateRequest(templateId, "겨울 웨비나", "duplicate-slug");
         mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,7 +100,7 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     void create_returns400_whenSlugInvalid() throws Exception {
         String token = obtainAccessToken();
         Long templateId = registerTemplate(token);
-        var request = new CampaignCreateRequest(templateId, "가을 웨비나", "Invalid Slug!!");
+        CampaignCreateRequest request = new CampaignCreateRequest(templateId, "가을 웨비나", "Invalid Slug!!");
 
         mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -126,7 +126,7 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     void publish_setsPublishedTrue() throws Exception {
         String token = obtainAccessToken();
         Long templateId = registerTemplate(token);
-        var createRequest = new CampaignCreateRequest(templateId, "공개 테스트", "publish-test");
+        CampaignCreateRequest createRequest = new CampaignCreateRequest(templateId, "공개 테스트", "publish-test");
         MvcResult created = mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -145,7 +145,7 @@ class CampaignControllerIntegrationTest extends AbstractAdminIntegrationTest {
     void list_returnsCreatedCampaigns() throws Exception {
         String token = obtainAccessToken();
         Long templateId = registerTemplate(token);
-        var request = new CampaignCreateRequest(templateId, "목록 테스트", "list-test");
+        CampaignCreateRequest request = new CampaignCreateRequest(templateId, "목록 테스트", "list-test");
         mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)

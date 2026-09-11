@@ -1,5 +1,6 @@
 package com.sanghee.glowuprizzcrm.admin.link;
 
+import com.sanghee.glowuprizzcrm.core.link.DistributionLink;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -25,7 +26,7 @@ public class DistributionLinkController {
     @PostMapping
     public ResponseEntity<DistributionLinkResponse> create(
             @PathVariable Long campaignId, @Valid @RequestBody DistributionLinkCreateRequest request) {
-        var link = distributionLinkService.create(campaignId, request.channel());
+        DistributionLink link = distributionLinkService.create(campaignId, request.channel());
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(link.getId())
