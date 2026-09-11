@@ -30,7 +30,7 @@ class CampaignStatsControllerIntegrationTest extends AbstractAdminIntegrationTes
     private SubmissionRepository submissionRepository;
 
     private long createCampaign(String token) throws Exception {
-        var templateRequest = new HtmlTemplateCreateRequest("성과 테스트용 템플릿", "<html></html>");
+        HtmlTemplateCreateRequest templateRequest = new HtmlTemplateCreateRequest("성과 테스트용 템플릿", "<html></html>");
         MvcResult templateResult = mockMvc.perform(post("/admin/html-templates")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -39,7 +39,7 @@ class CampaignStatsControllerIntegrationTest extends AbstractAdminIntegrationTes
         long templateId = objectMapper.readTree(templateResult.getResponse().getContentAsString())
                 .path("id").asLong();
 
-        var campaignRequest = new CampaignCreateRequest(templateId, "성과 테스트 캠페인", "stats-test-campaign");
+        CampaignCreateRequest campaignRequest = new CampaignCreateRequest(templateId, "성과 테스트 캠페인", "stats-test-campaign");
         MvcResult campaignResult = mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)

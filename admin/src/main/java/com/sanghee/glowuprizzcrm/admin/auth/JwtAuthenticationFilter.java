@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith(PREFIX)) {
             try {
                 Long operatorId = jwtTokenProvider.parseOperatorId(header.substring(PREFIX.length()));
-                var authentication = new UsernamePasswordAuthenticationToken(
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         operatorId, null, List.of(new SimpleGrantedAuthority("ROLE_OPERATOR")));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (RuntimeException e) {

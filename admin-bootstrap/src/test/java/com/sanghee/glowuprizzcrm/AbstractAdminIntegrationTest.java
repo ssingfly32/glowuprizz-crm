@@ -47,7 +47,7 @@ public abstract class AbstractAdminIntegrationTest {
     protected static final String SEED_OPERATOR_PASSWORD = "glowup1234!";
 
     protected String obtainAccessToken() throws Exception {
-        var request = new LoginRequest(SEED_OPERATOR_EMAIL, SEED_OPERATOR_PASSWORD);
+        LoginRequest request = new LoginRequest(SEED_OPERATOR_EMAIL, SEED_OPERATOR_PASSWORD);
         String body = mockMvc.perform(post("/admin/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

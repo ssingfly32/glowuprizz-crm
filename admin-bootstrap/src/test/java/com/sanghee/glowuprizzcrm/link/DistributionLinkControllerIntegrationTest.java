@@ -23,7 +23,7 @@ import tools.jackson.databind.JsonNode;
 class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegrationTest {
 
     private long createCampaign(String token) throws Exception {
-        var templateRequest = new HtmlTemplateCreateRequest("링크 테스트용 템플릿", "<html></html>");
+        HtmlTemplateCreateRequest templateRequest = new HtmlTemplateCreateRequest("링크 테스트용 템플릿", "<html></html>");
         MvcResult templateResult = mockMvc.perform(post("/admin/html-templates")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -32,7 +32,7 @@ class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegration
         long templateId = objectMapper.readTree(templateResult.getResponse().getContentAsString())
                 .path("id").asLong();
 
-        var campaignRequest = new CampaignCreateRequest(templateId, "링크 테스트 캠페인", "link-test-campaign");
+        CampaignCreateRequest campaignRequest = new CampaignCreateRequest(templateId, "링크 테스트 캠페인", "link-test-campaign");
         MvcResult campaignResult = mockMvc.perform(post("/admin/campaigns")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -44,7 +44,7 @@ class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegration
     @Test
     @DisplayName("인증 없이 생성하면 401을 반환한다")
     void create_returns401_whenNoToken() throws Exception {
-        var request = new DistributionLinkCreateRequest(Channel.INSTAGRAM);
+        DistributionLinkCreateRequest request = new DistributionLinkCreateRequest(Channel.INSTAGRAM);
 
         mockMvc.perform(post("/admin/campaigns/1/links")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -57,7 +57,7 @@ class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegration
     void create_returns201_whenCampaignExists() throws Exception {
         String token = obtainAccessToken();
         long campaignId = createCampaign(token);
-        var request = new DistributionLinkCreateRequest(Channel.INSTAGRAM);
+        DistributionLinkCreateRequest request = new DistributionLinkCreateRequest(Channel.INSTAGRAM);
 
         mockMvc.perform(post("/admin/campaigns/" + campaignId + "/links")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -73,7 +73,7 @@ class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegration
     @DisplayName("존재하지 않는 캠페인에 생성하면 404와 CAMPAIGN_NOT_FOUND를 반환한다")
     void create_returns404_whenCampaignNotFound() throws Exception {
         String token = obtainAccessToken();
-        var request = new DistributionLinkCreateRequest(Channel.X);
+        DistributionLinkCreateRequest request = new DistributionLinkCreateRequest(Channel.X);
 
         mockMvc.perform(post("/admin/campaigns/999999/links")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -88,7 +88,7 @@ class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegration
     void create_allowsMultipleLinksPerChannel() throws Exception {
         String token = obtainAccessToken();
         long campaignId = createCampaign(token);
-        var request = new DistributionLinkCreateRequest(Channel.YOUTUBE);
+        DistributionLinkCreateRequest request = new DistributionLinkCreateRequest(Channel.YOUTUBE);
 
         MvcResult first = mockMvc.perform(post("/admin/campaigns/" + campaignId + "/links")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
@@ -114,7 +114,7 @@ class DistributionLinkControllerIntegrationTest extends AbstractAdminIntegration
     void list_returnsCreatedLinks() throws Exception {
         String token = obtainAccessToken();
         long campaignId = createCampaign(token);
-        var request = new DistributionLinkCreateRequest(Channel.THREADS);
+        DistributionLinkCreateRequest request = new DistributionLinkCreateRequest(Channel.THREADS);
         mockMvc.perform(post("/admin/campaigns/" + campaignId + "/links")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
