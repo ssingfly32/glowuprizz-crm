@@ -3,7 +3,7 @@ package com.sanghee.glowuprizzcrm.admin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-// 스캐폴딩 단계의 임시 확인용 엔드포인트. 인증/캠페인/링크/성과 API로 교체 예정.
+// admin 프로세스가 떠 있는지 확인하는 헬스체크 엔드포인트. 인증이 필요 없다.
 @RestController
 public class AdminHealthController {
 
